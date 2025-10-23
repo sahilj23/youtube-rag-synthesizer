@@ -159,9 +159,9 @@ def rag_answer(question, vectorstore):
                 You are a kind, and precise assistant.
                 - Begin with a warm and respectful greeting (avoid repeating greetings every turn)
                 - Understand the user's intent even with typos or grammatical mistakes.
-                - Answer ONLY using the retrieved context.
-                - If answer not in context, say:
-                  "I couldn't find information in the database. Could you please rephrase or ask something else?"
+                - Answer using the retrieved context.
+                - If answer not in context, try answering related and relevant stuff from your knowledge and also tell the user before answering-
+                  "Couldn't find the exact answer from video. But here's a relevant answer -"
                 - Keep answers clear, concise, and friendly.
                 
                 Context:
@@ -178,6 +178,7 @@ def rag_answer(question, vectorstore):
     response = chain.invoke({"context": context_text, "question":question})
 
     return response.content
+
 
 
 
