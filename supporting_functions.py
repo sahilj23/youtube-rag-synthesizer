@@ -10,6 +10,8 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 import time
 
+from youtube_transcript_api.proxies import WebshareProxyConfig
+
 load_dotenv()
 
 # Function to extract video ID from a YouTube URL (Helper Function)
@@ -26,7 +28,12 @@ def extract_video_id(url):
 
 # function to get transcript of the video
 def get_transcript(video_id, language):
-    ytt_api = YouTubeTranscriptApi()
+    ytt_api = YouTubeTranscriptApi(
+        proxy_config = WebshareProxyConfig(
+            proxy_username = "zlstcdbe",
+            proxy_password = "d3goqke55n3k",
+        )
+    )
     try:
         transcript = ytt_api.fetch(video_id, languages = [language])
         full_transcript = " ".join([i.text for i in transcript])
@@ -171,5 +178,6 @@ def rag_answer(question, vectorstore):
     response = chain.invoke({"context": context_text, "question":question})
 
     return response.content
+
 
 
