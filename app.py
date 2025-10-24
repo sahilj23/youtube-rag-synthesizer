@@ -46,13 +46,16 @@ if submit_button:
     if youtube_url and language:
         video_id = extract_video_id(youtube_url)
         if video_id:
-            with st.spinner("Step 1/3 : Fetching transcript...."):
+            with st.spinner("Step 1/3 : Fetching transcript..."):
                 full_transcript = get_transcript(video_id, language)
 
+            if full_transcript is None:
+                st.error("Couldn't fetch transcript. Please try another video or check language code.")
+            else:
+                # Translate if needed
                 if language != "en":
-                    with st.spinner("Step 1.5/3 : Translating transcript into English, this may take a few moments..."):
+                    with st.spinner("Step 1.5/3 : Translating transcript into English, please wait..."):
                         full_transcript = translate_transcript(full_transcript)
-
 
         if task_option == "Notes For You":
             with st.spinner("Step 2/3 : Extracting important Topics..."):
@@ -101,6 +104,7 @@ if task_option == "Chat with Video" and "vector_store" in st.session_state:
             response = rag_answer(prompt, st.session_state.vector_store)
             st.write(response)
         st.session_state.messages.append({'role': 'assistant', 'content': response})
+
 
 
 
