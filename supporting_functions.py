@@ -10,7 +10,9 @@ from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 import time
 
-from youtube_transcript_api.proxies import WebshareProxyConfig
+
+import yt_dlp
+import requests
 
 load_dotenv()
 
@@ -27,20 +29,60 @@ def extract_video_id(url):
     return None
 
 # function to get transcript of the video
-def get_transcript(video_id, language):
-    ytt_api = YouTubeTranscriptApi(
-        proxy_config = WebshareProxyConfig(
-            proxy_username = "zlstcdbe",
-            proxy_password = "d3goqke55n3k",
-        )
-    )
+def get_transcript(video_id, language="en"):
+    """
+    Fetches the transcript of a YouTube video using yt-dlp.
+    This approach avoids rate limits from YouTubeTranscriptApi.
+    """
     try:
-        transcript = ytt_api.fetch(video_id, languages = [language])
-        full_transcript = " ".join([i.text for i in transcript])
-        time.sleep(40)
-        return full_transcript
+        # Cache directory to avoid repeated downloads
+        os.makedirs("transcripts", exist_ok=True)
+        cache_path = os.path.join("transcripts", f"{video_id}.txt")
+
+        # Return cached transcript if it exists
+        if os.path.exists(cache_path):
+            with open(cache_path, "r", encoding="utf-8") as f:
+                return f.read()
+
+        # Configure yt-dlp options
+        ydl_opts = {
+            "skip_download": True,
+            "writesubtitles": True,
+            "writeautomaticsub": True,
+            "subtitleslangs": [language],
+            "subtitlesformat": "json3",
+            "quiet": True,
+            "outtmpl": os.path.join("transcripts", f"{video_id}"),
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
+            subs = info.get("subtitles") or info.get("automatic_captions")
+
+            if not subs or language not in subs:
+                st.error("Transcript not available for this video/language.")
+                return None
+
+            # Extract subtitle URL
+            sub_url = subs[language][0]["url"]
+            response = requests.get(sub_url)
+            response.raise_for_status()
+
+            # Parse transcript JSON
+            data = json.loads(response.text)
+            full_transcript = " ".join(
+                [seg["segs"][0]["utf8"] for seg in data["events"] if "segs" in seg]
+            )
+
+            # Cache transcript
+            with open(cache_path, "w", encoding="utf-8") as f:
+                f.write(full_transcript)
+
+            return full_transcript
+
     except Exception as e:
-        st.error(f"Error fetching video {e}")
+        st.error(f"Error fetching transcript: {e}")
+        return None
 
 
 # function to translate the transcript to english
@@ -178,6 +220,7 @@ def rag_answer(question, vectorstore):
     response = chain.invoke({"context": context_text, "question":question})
 
     return response.content
+
 
 
 
