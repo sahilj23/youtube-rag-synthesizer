@@ -13,6 +13,8 @@ import time
 
 import yt_dlp
 import requests
+import os
+import json
 
 load_dotenv()
 
@@ -220,6 +222,7 @@ def rag_answer(question, vectorstore):
     response = chain.invoke({"context": context_text, "question":question})
 
     return response.content
+
 
 
 
