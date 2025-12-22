@@ -57,7 +57,7 @@ def get_transcript(video_id, language="en"):
             "outtmpl": os.path.join("transcripts", f"{video_id}"),
         }
 
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:  # use WITH so the connection is closed properly once the task is finished
             info = ydl.extract_info(f"https://www.youtube.com/watch?v={video_id}", download=False)
             subs = info.get("subtitles") or info.get("automatic_captions")
 
@@ -222,6 +222,7 @@ def rag_answer(question, vectorstore):
     response = chain.invoke({"context": context_text, "question":question})
 
     return response.content
+
 
 
 
