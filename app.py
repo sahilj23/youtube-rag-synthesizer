@@ -1,8 +1,6 @@
-# --- THIS MUST BE THE FIRST THING IN YOUR SCRIPT ---
 __import__('pysqlite3')
 import sys
 sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')  # because of chroma database and deploying on streamlit
-# --- END OF FIX ---
 
 import streamlit as st
 from supporting_functions import (
@@ -104,6 +102,7 @@ if task_option == "Chat with Video" and "vector_store" in st.session_state:
             response = rag_answer(prompt, st.session_state.vector_store)
             st.write(response)
         st.session_state.messages.append({'role': 'assistant', 'content': response})
+
 
 
 
